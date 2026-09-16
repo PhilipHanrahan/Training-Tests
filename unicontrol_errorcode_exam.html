@@ -1,5 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Unicontrol Error Code Exam</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>Unicontrol Error Code Exam</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -1093,6 +1092,9 @@ var SECSEL=true;
 var BANDGROUPS=[{"name": "General", "subs": [{"key": "General / E000 & E001", "label": "E000 & E001", "ns": [1, 2, 3, 4]}], "ns": [1, 2, 3, 4]}, {"name": "Licence errors", "subs": [{"key": "Licence errors / E002 Licence missing", "label": "E002 Licence missing", "ns": [5, 6, 7, 8]}, {"key": "Licence errors / E003 & E004", "label": "E003 & E004", "ns": [9, 10, 11, 12]}, {"key": "Licence errors / E011-E033 feature licences", "label": "E011-E033 feature licences", "ns": [13, 14, 15, 16, 17, 18]}], "ns": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]}, {"name": "Sensor & device disconnection", "subs": [{"key": "Sensor & device disconnection / E110-E121 sensor not connected", "label": "E110-E121 sensor not connected", "ns": [19, 20, 21, 22, 23, 24, 25, 26, 27]}, {"key": "Sensor & device disconnection / E118 swing boom wire / tilt", "label": "E118 swing boom wire / tilt", "ns": [28, 29, 30]}, {"key": "Sensor & device disconnection / E122-E141 disconnected devices", "label": "E122-E141 disconnected devices", "ns": [31, 32, 33, 34, 35, 36, 37]}, {"key": "Sensor & device disconnection / E127 front body / front tilt", "label": "E127 front body / front tilt", "ns": [38, 39, 40]}], "ns": [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]}, {"name": "GNSS & heading", "subs": [{"key": "GNSS & heading / E200 No heading", "label": "E200 No heading", "ns": [41, 42, 43, 44]}, {"key": "GNSS & heading / E201 No GPS Fix", "label": "E201 No GPS Fix", "ns": [45, 46, 47]}, {"key": "GNSS & heading / E202 No GPS Fix (Float)", "label": "E202 No GPS Fix (Float)", "ns": [48, 49, 50, 51, 52]}, {"key": "GNSS & heading / E203 No GPS Fix (SBAS)", "label": "E203 No GPS Fix (SBAS)", "ns": [53, 54, 55]}, {"key": "GNSS & heading / E204 No heading", "label": "E204 No heading", "ns": [56, 57, 58]}], "ns": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]}, {"name": "Tilt, laser, sonic & IMU", "subs": [{"key": "Tilt, laser, sonic & IMU / E300 & E301 tilt out of range", "label": "E300 & E301 tilt out of range", "ns": [59, 60, 61, 62, 63]}, {"key": "Tilt, laser, sonic & IMU / E302-E321 laser, IMU & sonic", "label": "E302-E321 laser, IMU & sonic", "ns": [64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74]}], "ns": [59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74]}, {"name": "Coordinate, geoid & job setup", "subs": [{"key": "Coordinate, geoid & job setup / E401-E405", "label": "E401-E405", "ns": [75, 76, 77, 78, 79, 80, 81, 82]}], "ns": [75, 76, 77, 78, 79, 80, 81, 82]}];
 var BANDS={excellent:97,pass:90,review:50};
 var PASSCODE="unicontrol-errorcode-admin";
+var BACKEND_URL="https://script.google.com/macros/s/AKfycbyhzgsmsns3QobZ3RWRcJlwnPtVSsZGiBK7sg8LxV0fHV12lK2WQbfX67SYgPMDmlJWVg/exec";
+var BACKEND_KEY="hitech-quiz-2026";
+var TEST_ID="Unicontrol_ErrorCode_Quiz";
 var SIGNIN=true;
 var EXAM_TITLE="UCS Error Codes \u2014 Diagnostic Exam";
 var STORE_KEY="ucs_times_"+"Unicontrol_ErrorCode_Quiz";
@@ -1100,7 +1102,7 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
 
 (function(){
   var chosen={}, graded=false, taker={name:"",email:""}, dateStr="", result=null;
-  var db=null, downloads=null, haveDb=false, timesTaken=null;
+  var db=null, downloads=null, haveDb=false, timesTaken=null, REMOTE=false;
   var qEls=[].slice.call(document.querySelectorAll('.q'));
   function $(id){return document.getElementById(id);}
 
@@ -1181,12 +1183,75 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
   var dbReadyP=new Promise(function(res){
     if(window.claude && claude.use){
       claude.use('db').then(function(x){ if(x){ db=x; haveDb=true; subscribeCount(); } res(); }, function(){ res(); });
+    } else if(BACKEND_URL){
+      db=makeRemoteDb({url:BACKEND_URL, secret:BACKEND_KEY, test:TEST_ID});
+      haveDb=true; REMOTE=true; subscribeCount(); res();
     } else { res(); }
   });
   if(window.claude && claude.use){
     claude.use('downloads').then(function(x){ if(x){ downloads=x; showDl(); } });
   }
   function showDl(){ ['dlShortBtn','dlFullBtn'].forEach(function(id){ if($(id)) $(id).hidden=false; }); }
+
+  // ---- self-hosted results backend (Google Apps Script + Sheet) ----
+  // A drop-in, Firestore-shaped shim used when the page is served OUTSIDE
+  // Claude (GitHub Pages, your own site, a local file) and BACKEND_URL is set.
+  // Reads go over JSONP (a <script> tag) and writes over fetch(no-cors) so it
+  // works cross-origin with no CORS/header setup on the Apps Script side.
+  function makeRemoteDb(cfg){
+    var seq=0;
+    function jsonp(params){
+      return new Promise(function(resolve,reject){
+        var cb='__qzcb_'+(++seq)+'_'+Date.now();
+        var s=document.createElement('script');
+        var to=setTimeout(function(){ cleanup(); reject(new Error('timeout')); },15000);
+        function cleanup(){ try{delete window[cb];}catch(e){ window[cb]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); clearTimeout(to); }
+        window[cb]=function(data){ cleanup(); resolve(data); };
+        s.onerror=function(){ cleanup(); reject(new Error('network')); };
+        var q='callback='+encodeURIComponent(cb)+'&test='+encodeURIComponent(cfg.test);
+        for(var k in params){ if(params[k]!==undefined&&params[k]!==null) q+='&'+encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }
+        s.src=cfg.url+(cfg.url.indexOf('?')<0?'?':'&')+q;
+        document.head.appendChild(s);
+      });
+    }
+    function post(params,body){
+      var q='test='+encodeURIComponent(cfg.test);
+      for(var k in params){ if(params[k]!==undefined&&params[k]!==null) q+='&'+encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }
+      return fetch(cfg.url+(cfg.url.indexOf('?')<0?'?':'&')+q,{
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(body||{})
+      });
+    }
+    return {
+      collection:function(name){
+        return {
+          get:function(pass){
+            return jsonp({action:'list',collection:name,pass:pass}).then(function(d){
+              if(!d||d.ok===false){ var e=new Error('load'); e.code=(d&&d.error)||'error'; throw e; }
+              var rows=d.rows||[];
+              return { docs: rows.map(function(r){ return { data:function(){return r;} }; }), size: rows.length };
+            });
+          },
+          onSnapshot:function(cb,err){
+            jsonp({action:'count',collection:name}).then(function(d){ cb({ size:(d&&d.count)||0 }); }, function(e){ if(err) err(e); });
+          }
+        };
+      },
+      doc:function(path){
+        var i=path.indexOf('/'), coll=path.slice(0,i), id=path.slice(i+1);
+        return {
+          set:function(obj){ return post({action:'set',collection:coll,id:id,secret:cfg.secret}, obj); },
+          get:function(){
+            return jsonp({action:'get',collection:coll,id:id,secret:cfg.secret}).then(function(d){
+              var doc=(d&&d.ok!==false)?(d.doc||null):null;
+              return { exists: !!doc, data:function(){ return doc; } };
+            });
+          }
+        };
+      }
+    };
+  }
 
   // ---- times taken ----
   function localTimes(){ try{return parseInt(localStorage.getItem(STORE_KEY)||'0',10)||0;}catch(e){return 0;} }
@@ -1298,7 +1363,7 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
   }
   function clearProgress(sl){
     try{ localStorage.removeItem(progLocalKey(sl)); }catch(e){}
-    if(haveDb && db){ try{ db.doc('inprogress/'+sl).set({done:true, chosen:{}, ts:Date.now()}); }catch(e){} }
+    if(haveDb && db){ try{ var pr=db.doc('inprogress/'+sl).set({done:true, chosen:{}, ts:Date.now()}); if(pr&&pr.then) pr.then(null,function(){}); }catch(e){} }
   }
   function applySelections(){
     qEls.forEach(function(q){
@@ -1585,14 +1650,21 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
   if($('adminLink')) $('adminLink').addEventListener('click',openAdmin);
   if($('adminClose')) $('adminClose').addEventListener('click',closeAdmin);
   if($('pcBtn')) $('pcBtn').addEventListener('click',function(){
-    if($('pc').value===PASSCODE){ $('adminGate').hidden=true; $('adminBody').hidden=false; loadResults(); }
-    else { $('pcMsg').textContent='Incorrect passcode.'; }
+    var entered=$('pc').value;
+    if(REMOTE){
+      // The passcode is verified on the server (it is NOT in this page).
+      if($('pcMsg')) $('pcMsg').textContent='Checking…';
+      loadResults(entered);
+    } else if(entered===PASSCODE){
+      $('adminGate').hidden=true; $('adminBody').hidden=false; loadResults();
+    } else { $('pcMsg').textContent='Incorrect passcode.'; }
   });
-  function loadResults(){
+  function loadResults(pass){
     var list=$('adminList');
-    if(!(haveDb&&db)){ list.innerHTML='<p class="hint">Recorded results are only available on the published online exam. Open the shared link (not a downloaded copy) to view them.</p>'; return; }
-    list.innerHTML='<p class="hint">Loading…</p>';
-    db.collection('results').get().then(function(snap){
+    if(!(haveDb&&db)){ list.innerHTML='<p class="hint">Recorded results are only available on the published online exam, or a self-hosted copy connected to your results backend. Open the shared/hosted link (not a downloaded copy) to view them.</p>'; return; }
+    if(!REMOTE) list.innerHTML='<p class="hint">Loading…</p>';
+    db.collection('results').get(pass).then(function(snap){
+      if(REMOTE){ $('adminGate').hidden=true; $('adminBody').hidden=false; if($('pcMsg')) $('pcMsg').textContent=''; }
       var rows=snap.docs.map(function(d){return d.data();}).filter(Boolean);
       rows.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
       $('adminCount').innerHTML='<b>'+rows.length+'</b> result'+(rows.length===1?'':'s')+' recorded';
@@ -1615,7 +1687,10 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
           else { tr.hidden=true; sp.textContent='details'; }
         });
       });
-    }).catch(function(e){ list.innerHTML='<p class="hint">Could not load results ('+esc(e&&e.code||'error')+').</p>'; });
+    }).catch(function(e){
+      if(REMOTE && e && e.code==='auth'){ if($('pcMsg')) $('pcMsg').textContent='Incorrect passcode.'; return; }
+      list.innerHTML='<p class="hint">Could not load results ('+esc(e&&e.code||'error')+').</p>';
+    });
   }
   function detailHTML(r){
     var h='<div style="margin-bottom:6px"><b>Score by section:</b></div>';
@@ -1656,5 +1731,4 @@ var PROG_KEY="ucs_prog_"+"Unicontrol_ErrorCode_Quiz"+"_";
   updateProgress();
 })();
 
-</script>
-</body></html>
+</script></body></html>

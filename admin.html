@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exam Results — Admin</title>
+<style>
+  :root{
+    --ink:#1a2330; --muted:#5c6b7a; --line:#e2e8f0; --bg:#f6f8fb; --card:#fff;
+    --accent:#1f6feb; --good:#137a4b; --good-tint:#e6f5ee; --bad:#b42318; --bad-tint:#fdecea;
+    --amber:#fdf1d6; --amber-ink:#8a5a00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 64px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .sub{color:var(--muted);margin:0 0 20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px;}
+  label{display:block;font-weight:600;font-size:13px;margin:0 0 4px;}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .row3{display:grid;grid-template-columns:2fr 1fr auto;gap:14px;align-items:end;}
+  @media(max-width:640px){.row,.row3{grid-template-columns:1fr;}}
+  .btn{display:inline-block;padding:10px 16px;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer;}
+  .btn.ghost{background:#eef2f7;color:var(--ink);}
+  .btn:disabled{opacity:.5;cursor:default;}
+  .hint{color:var(--muted);font-size:13px;}
+  .msg{font-size:13px;margin-top:8px;min-height:1em;}
+  .msg.err{color:var(--bad);}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px;}
+  .stat{background:#eef3fa;border:1px solid var(--line);border-radius:10px;padding:8px 14px;}
+  .stat b{display:block;font-size:20px;}
+  .stat span{font-size:12px;color:var(--muted);}
+  table.rtable{width:100%;border-collapse:collapse;font-size:14px;}
+  table.rtable th,table.rtable td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.rtable th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);}
+  td.num,th.num{text-align:right;white-space:nowrap;}
+  .exp{color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px;}
+  .ans-line{padding:2px 0;font-size:13px;}
+  .ai{font-variant-numeric:tabular-nums;}
+  .ok{color:var(--good);} .no{color:var(--bad);}
+  .ia-row.low td{background:var(--bad-tint);}
+  .ia-pct{font-weight:700;font-variant-numeric:tabular-nums;}
+  .sechead{margin:22px 0 8px;font-size:15px;}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;}
+  .pill.pass{background:var(--good-tint);color:var(--good);}
+  .pill.fail{background:var(--bad-tint);color:var(--bad);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Exam Results — Admin</h1>
+  <p class="sub">Passcode-protected view of results recorded by your self-hosted exams. Mirrors the Results view inside Claude.</p>
+
+  <div class="card">
+    <div class="row3">
+      <div>
+        <label for="url">Results backend URL (Apps Script /exec)</label>
+        <input id="url" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+      <div>
+        <label for="test">Exam</label>
+        <select id="test"><option value="">— load list —</option></select>
+      </div>
+      <div><button class="btn ghost" id="refreshBtn" type="button">Load exams</button></div>
+    </div>
+    <div class="row" style="margin-top:14px;">
+      <div>
+        <label for="pass">Admin passcode</label>
+        <input id="pass" type="password" autocomplete="off" placeholder="set in Code.gs">
+      </div>
+      <div style="display:flex;align-items:end;">
+        <button class="btn" id="viewBtn" type="button" style="width:100%;">View results</button>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="card" id="resultsCard" hidden>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div id="stats" class="stats"></div>
+      <button class="btn ghost" id="csvBtn" type="button">Export CSV</button>
+    </div>
+    <div id="list"></div>
+    <div id="iaWrap" hidden>
+      <h2 class="sechead">Question analysis <span class="hint">(across all recorded attempts — most-missed first)</span></h2>
+      <div id="ia"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Optionally hard-code your backend URL here so you never have to type it:
+  var BACKEND_URL = "https://script.google.com/macros/s/AKfycbyhzgsmsns3QobZ3RWRcJlwnPtVSsZGiBK7sg8LxV0fHV12lK2WQbfX67SYgPMDmlJWVg/exec";           // e.g. "https://script.google.com/macros/s/AKfy…/exec"
+  var PASS_MARK = 90;             // % pass mark, for pass-rate + review highlight
+
+  function $(id){return document.getElementById(id);}
+  function esc(s){var d=document.createElement('div'); d.textContent=(s==null?'':s); return d.innerHTML;}
+  function subLabel(sec){ var p=(sec||'').split(' / '); return p.length>1?p.slice(1).join(' / '):(p[0]||''); }
+
+  // restore last-used URL
+  try{ var saved=localStorage.getItem('qz_admin_url'); if(saved) $('url').value=saved; }catch(e){}
+  if(BACKEND_URL && !$('url').value) $('url').value=BACKEND_URL;
+
+  var seq=0;
+  function jsonp(params){
+    return new Promise(function(resolve,reject){
+      var url=($('url').value||'').trim();
+      if(!url){ reject(new Error('no url')); return; }
+      try{ localStorage.setItem('qz_admin_url', url); }catch(e){}
+      var cb='__admcb_'+(++seq)+'_'+Date.now();
+      var s=document.createElement('script');
+      var to=setTimeout(function(){ cleanup(); reject(new Error('timeout')); },15000);
+      function cleanup(){ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); clearTimeout(to); }
+      window[cb]=function(d){ cleanup(); resolve(d); };
+      s.onerror=function(){ cleanup(); reject(new Error('network')); };
+      var q='callback='+encodeURIComponent(cb);
+      for(var k in params){ if(params[k]!=null) q+='&'+encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }
+      s.src=url+(url.indexOf('?')<0?'?':'&')+q;
+      document.head.appendChild(s);
+    });
+  }
+
+  function setMsg(t,err){ var m=$('msg'); m.textContent=t||''; m.className='msg'+(err?' err':''); }
+
+  $('refreshBtn').addEventListener('click',function(){
+    setMsg('Loading exam list…');
+    jsonp({action:'tests'}).then(function(d){
+      if(!d||d.ok===false){ setMsg('Could not load ('+((d&&d.error)||'error')+').',true); return; }
+      var sel=$('test'); sel.innerHTML='';
+      var ts=d.tests||[];
+      if(!ts.length){ sel.innerHTML='<option value="">(no results recorded yet)</option>'; setMsg('No exams have recorded results yet.'); return; }
+      ts.forEach(function(t){ var o=document.createElement('option'); o.value=t.test; o.textContent=t.test+'  ('+t.count+')'; sel.appendChild(o); });
+      setMsg(ts.length+' exam'+(ts.length===1?'':'s')+' with recorded results.');
+    },function(e){ setMsg('Could not reach the backend. Check the URL.',true); });
+  });
+
+  var CURRENT=[];
+  $('viewBtn').addEventListener('click',function(){
+    var test=$('test').value, pass=$('pass').value;
+    if(!test){ setMsg('Pick an exam first (Load exams).',true); return; }
+    if(!pass){ setMsg('Enter the admin passcode.',true); return; }
+    setMsg('Loading results…');
+    jsonp({action:'list', test:test, pass:pass}).then(function(d){
+      if(!d||d.ok===false){
+        setMsg(d&&d.error==='auth'?'Incorrect passcode.':'Could not load ('+((d&&d.error)||'error')+').',true);
+        $('resultsCard').hidden=true; return;
+      }
+      setMsg('');
+      CURRENT=(d.rows||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+      render(CURRENT, test);
+    },function(e){ setMsg('Could not reach the backend. Check the URL.',true); });
+  });
+
+  function render(rows, test){
+    $('resultsCard').hidden=false;
+    // stats
+    var n=rows.length, passN=0, sum=0;
+    rows.forEach(function(r){ sum+=(+r.pct||0); if((+r.pct||0)>=PASS_MARK) passN++; });
+    var avg=n?Math.round(sum/n):0, prate=n?Math.round(passN/n*100):0;
+    $('stats').innerHTML=
+      stat(n,'results')+stat(avg+'%','average score')+stat(prate+'%','pass rate (≥'+PASS_MARK+'%)')+
+      stat(uniquePeople(rows),'people');
+    // table
+    if(!n){ $('list').innerHTML='<p class="hint">No results recorded yet for this exam.</p>'; $('iaWrap').hidden=true; return; }
+    var h='<table class="rtable"><thead><tr><th>Date</th><th>Name</th><th>Email</th><th class="num">Score</th><th class="num">%</th><th></th><th></th></tr></thead><tbody>';
+    rows.forEach(function(r,i){
+      var pass=(+r.pct||0)>=PASS_MARK;
+      h+='<tr><td class="num">'+esc(r.dateStr||'')+'</td><td>'+esc(r.name||'—')+'</td><td>'+esc(r.email||'—')+'</td>'
+        +'<td class="num">'+esc(r.score)+' / '+esc(r.total)+'</td><td class="num">'+esc(r.pct)+'%</td>'
+        +'<td><span class="pill '+(pass?'pass':'fail')+'">'+(pass?'Pass':'Review')+'</span></td>'
+        +'<td><span class="exp" data-i="'+i+'">details</span></td></tr>';
+      h+='<tr class="detail" id="det'+i+'" hidden><td colspan="7"></td></tr>';
+    });
+    h+='</tbody></table>';
+    $('list').innerHTML=h;
+    $('list').querySelectorAll('.exp').forEach(function(sp){
+      sp.addEventListener('click',function(){
+        var i=+sp.dataset.i, tr=$('det'+i);
+        if(tr.hidden){ tr.hidden=false; tr.firstChild.innerHTML=detailHTML(rows[i]); sp.textContent='hide'; }
+        else{ tr.hidden=true; sp.textContent='details'; }
+      });
+    });
+    renderIA(rows);
+  }
+
+  function stat(v,l){ return '<div class="stat"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>'; }
+  function uniquePeople(rows){ var s={}; rows.forEach(function(r){ s[(r.email||r.name||'').toLowerCase()]=1; }); return Object.keys(s).filter(Boolean).length; }
+
+  function detailHTML(r){
+    var h='<div style="margin-bottom:6px"><b>Score by section:</b></div>';
+    (r.sections||[]).forEach(function(s){ h+='<div class="ans-line">'+esc(s.label)+': <span class="ai">'+esc(s.correct)+' / '+esc(s.total)+'</span></div>'; });
+    h+='<div style="margin:8px 0 6px"><b>Answers:</b></div>';
+    (r.answers||[]).forEach(function(a){
+      h+='<div class="ans-line">'+esc(a.n)+'. '+esc(a.q)+'<br>'
+        +'<span class="'+(a.ok?'ok':'no')+'">'+esc(a.chosen==null?'(not answered)':a.chosen)+(a.ok?' ✓':' ✗')+'</span>'
+        +(a.ok?'':' — correct: <span class="ok">'+esc(a.correct)+'</span>')
+        +((!a.ok&&a.expl)?'<br><span style="color:var(--muted)">Why: '+esc(a.expl)+'</span>':'')+'</div>';
+    });
+    return h;
+  }
+
+  function renderIA(rows){
+    var st={};
+    rows.forEach(function(r){ (r.answers||[]).forEach(function(a){
+      var k=a.q; if(!k) return;
+      if(!st[k]) st[k]={q:a.q, section:a.section||'', shown:0, correct:0};
+      st[k].shown++; if(a.ok) st[k].correct++;
+    });});
+    var items=Object.keys(st).map(function(k){return st[k];});
+    if(!items.length){ $('iaWrap').hidden=true; return; }
+    items.forEach(function(s){ s.pct=Math.round(s.correct/s.shown*100); });
+    items.sort(function(a,b){ return a.pct-b.pct || b.shown-a.shown; });
+    var h='<table class="rtable"><thead><tr><th class="num">%</th><th class="num">Correct</th><th>Question</th><th>Section</th></tr></thead><tbody>';
+    items.forEach(function(s){
+      var low=s.pct<PASS_MARK;
+      h+='<tr class="'+(low?'ia-row low':'ia-row')+'"><td class="num ia-pct">'+s.pct+'%</td>'
+        +'<td class="num">'+s.correct+' / '+s.shown+'</td><td>'+esc(s.q)+'</td><td>'+esc(subLabel(s.section))+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    $('ia').innerHTML=h; $('iaWrap').hidden=false;
+  }
+
+  $('csvBtn').addEventListener('click',function(){
+    if(!CURRENT.length) return;
+    var cols=['dateStr','name','email','score','total','pct','verdict'];
+    var lines=[cols.join(',')];
+    CURRENT.forEach(function(r){
+      lines.push(cols.map(function(c){ var v=r[c]==null?'':String(r[c]); return '"'+v.replace(/"/g,'""')+'"'; }).join(','));
+    });
+    var blob=new Blob([lines.join('\r\n')],{type:'text/csv'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=($('test').value||'results')+'_results.csv'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+  });
+})();
+</script>
+</body>
+</html>
