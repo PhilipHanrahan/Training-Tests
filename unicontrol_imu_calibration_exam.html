@@ -1,0 +1,863 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Unicontrol IMU Calibration Exam</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --ground:#f2f0ea; --surface:#ffffff; --surface-2:#faf9f5;
+  --ink:#1b1b18; --muted:#6c6b62; --faint:#98968c;
+  --line:#e4e0d6; --line-strong:#d4cfc2;
+  --steel:#2b4a63; --steel-ink:#ffffff; --steel-tint:#e8eef3;
+  --amber:#f4b400; --amber-ink:#231f13;
+  --good:#1f7a4d; --good-tint:#e4f1ea; --good-line:#7cc39c;
+  --bad:#b3341f; --bad-tint:#f7e6e2; --bad-line:#e0917f;
+  --shadow:0 1px 2px rgba(20,18,12,.06),0 8px 24px rgba(20,18,12,.05);
+  --maxw:820px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#141416; --surface:#1e1e21; --surface-2:#26262a;
+    --ink:#ece9e2; --muted:#a3a094; --faint:#77756c;
+    --line:#33333a; --line-strong:#42424a;
+    --steel:#8fbadb; --steel-ink:#121a22; --steel-tint:#243642;
+    --amber:#f4b400; --amber-ink:#231f13;
+    --good:#5fce97; --good-tint:#1c3128; --good-line:#2f7a54;
+    --bad:#f08a75; --bad-tint:#3a201b; --bad-line:#8a3a2c;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#141416; --surface:#1e1e21; --surface-2:#26262a;
+  --ink:#ece9e2; --muted:#a3a094; --faint:#77756c;
+  --line:#33333a; --line-strong:#42424a;
+  --steel:#8fbadb; --steel-ink:#121a22; --steel-tint:#243642;
+  --amber:#f4b400; --amber-ink:#231f13;
+  --good:#5fce97; --good-tint:#1c3128; --good-line:#2f7a54;
+  --bad:#f08a75; --bad-tint:#3a201b; --bad-line:#8a3a2c;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px 150px}
+h1{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; text-wrap:balance; font-size:clamp(28px,5.5vw,44px); line-height:1.05; letter-spacing:-.01em; margin:0 0 14px}
+.eyebrow{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin:0 0 16px}
+.mono{font-family:"IBM Plex Mono",monospace}
+
+/* ---- top bar ---- */
+.bar{position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 88%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.bar-inner{max-width:var(--maxw); margin:0 auto; padding:9px 22px; display:flex; align-items:center; gap:12px}
+.bar .mark{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; letter-spacing:.02em; font-size:15px}
+.bar .mark b{color:var(--amber)}
+.bar .spacer{flex:1}
+.count{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted); white-space:nowrap}
+.count b{color:var(--ink)}
+.linklike{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); background:none; border:0; cursor:pointer; text-decoration:underline; text-underline-offset:2px}
+.linklike:hover{color:var(--steel)}
+.btn{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; letter-spacing:.03em; color:var(--ink); background:var(--surface); border:1px solid var(--line-strong); padding:6px 11px; border-radius:7px; cursor:pointer; white-space:nowrap}
+.btn:hover{border-color:var(--steel)}
+.btn:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
+.btn.primary{background:var(--steel); color:var(--steel-ink); border-color:var(--steel)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.lg{padding:11px 20px; font-size:13px}
+
+/* ---- warning banner ---- */
+.warn{background:#fff7e0; color:#5a4a12; border:1px solid #f0d98a; border-left:4px solid var(--amber); border-radius:9px; padding:13px 16px; font-size:14.5px; margin:0 0 20px}
+:root:not([data-theme="light"]) .warn, :root[data-theme="dark"] .warn{background:#2c2612; color:#e7d9a6; border-color:#5c4f24; border-left-color:var(--amber)}
+.warn b{font-weight:600}
+
+/* ---- start / sign-in screen ---- */
+.start{max-width:var(--maxw); margin:0 auto; padding:44px 22px 60px}
+.card{background:var(--surface); border:1px solid var(--line-strong); border-radius:14px; box-shadow:var(--shadow); padding:24px}
+.field{display:flex; flex-direction:column; gap:5px; margin:0 0 14px}
+.field label{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.04em; color:var(--muted)}
+.field input{font-family:inherit; font-size:16px; color:var(--ink); background:var(--surface-2); border:1.5px solid var(--line-strong); border-radius:9px; padding:11px 13px}
+.field input:focus{outline:none; border-color:var(--steel)}
+.startmeta{display:flex; flex-wrap:wrap; gap:8px 10px; margin:4px 0 20px}
+.tag{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; color:var(--muted); border:1px solid var(--line-strong); border-radius:999px; padding:4px 11px; background:var(--surface-2)}
+.tag b{color:var(--ink); font-weight:600}
+.hint{font-size:13px; color:var(--muted); margin:8px 0 0}
+
+/* ---- exam header ---- */
+.exhdr{padding:22px 0 18px; border-bottom:2px solid var(--ink); margin-bottom:6px}
+.exhdr .who{font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--muted); margin:10px 0 0}
+.exhdr .who b{color:var(--ink)}
+
+/* ---- result card ---- */
+.result{margin-top:26px; border-radius:12px; padding:22px 24px; box-shadow:var(--shadow); border:1px solid var(--line-strong); background:var(--surface)}
+.result[hidden]{display:none}
+.result .score{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:44px; line-height:1; margin:0}
+.result .score .of{color:var(--muted); font-size:26px; font-weight:600}
+.result .pct{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:20px; margin:6px 0 0}
+.result .rrow{display:flex; align-items:center; gap:18px; flex-wrap:wrap}
+.result .verdict{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; padding:6px 12px; border-radius:999px; letter-spacing:.03em}
+.result .msg{color:var(--muted); font-size:14.5px; margin:12px 0 0}
+.meter{height:10px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; margin:16px 0 0}
+.meter>span{display:block; height:100%; background:var(--good)}
+.result .actions{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 0; padding-top:16px; border-top:1px solid var(--line)}
+.result .saved{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); margin:12px 0 0}
+.breakdown{margin:22px 0 0; border-top:1px solid var(--line); padding-top:6px}
+.breakdown .bd-title{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:10px 0 6px}
+.bd-row{display:flex; align-items:center; gap:14px; padding:9px 2px; border-bottom:1px dotted var(--line)}
+.bd-row .bd-name{flex:1; font-size:14.5px; color:var(--ink)}
+.bd-row .bd-score{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; font-variant-numeric:tabular-nums; white-space:nowrap}
+.bd-row .bd-score.full{color:var(--good)}
+.bd-row .bd-score.low{color:var(--bad)}
+.review-msg{font-size:14px; color:#a12a63; background:#fde7f0; border:1px solid #f4b8d3; border-left:4px solid #e0559a; border-radius:9px; padding:10px 14px; margin:8px 0 12px}
+.review-msg b{font-weight:600}
+:root:not([data-theme="light"]) .review-msg, :root[data-theme="dark"] .review-msg{color:#f6b8d6; background:#3a2230; border-color:#7a3357; border-left-color:#e0559a}
+.bd-row.review{background:#fde7f0; border-bottom-color:transparent; border-radius:8px; padding-left:10px; padding-right:10px; margin:2px 0}
+.bd-row.review .bd-name{color:#a12a63; font-weight:600}
+:root:not([data-theme="light"]) .bd-row.review, :root[data-theme="dark"] .bd-row.review{background:#3a2230}
+:root:not([data-theme="light"]) .bd-row.review .bd-name, :root[data-theme="dark"] .bd-row.review .bd-name{color:#f6b8d6}
+
+/* ---- band / subsection / question ---- */
+.band{margin:40px 0 6px; background:var(--steel); color:var(--steel-ink); border-radius:10px; padding:16px 20px; display:flex; align-items:baseline; gap:14px; box-shadow:var(--shadow)}
+.band h2{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:23px; letter-spacing:.01em; margin:0}
+.band .b-count{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:12.5px; font-weight:600; opacity:.85}
+.sub{margin:28px 0 8px}
+.sub-lab{font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.06em; color:var(--steel); margin:0 0 3px; font-weight:600}
+.sub h3{font-family:"Barlow Semi Condensed",sans-serif; font-weight:600; font-size:20px; margin:0; display:flex; align-items:baseline; gap:10px}
+.sub h3 .cnt{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint); font-weight:500}
+.sub-rule{height:1px; background:var(--line-strong); margin:10px 0 20px}
+.q{background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:18px 20px 16px; margin:0 0 14px; box-shadow:var(--shadow); break-inside:avoid; scroll-margin-top:64px}
+.q.graded.q-right{border-color:var(--good-line)}
+.q.graded.q-wrong{border-color:var(--bad-line)}
+.q-head{display:flex; gap:13px; align-items:flex-start}
+.num{flex:none; font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:15px; background:var(--amber); color:var(--amber-ink); min-width:30px; height:26px; padding:0 8px; border-radius:6px; display:flex; align-items:center; justify-content:center; margin-top:1px}
+.q.graded.q-right .num{background:var(--good); color:#fff}
+.q.graded.q-wrong .num{background:var(--bad); color:#fff}
+.q-text{font-size:16px; font-weight:500; margin:0}
+.q-flag{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:999px; display:none; white-space:nowrap}
+.q.graded.q-right .q-flag{display:inline-block; color:var(--good); background:var(--good-tint)}
+.q.graded.q-wrong .q-flag{display:inline-block; color:var(--bad); background:var(--bad-tint)}
+.opts{list-style:none; margin:13px 0 0; padding:0; display:grid; gap:8px}
+.opt{display:flex; gap:11px; align-items:center; font-size:15px; color:var(--ink); width:100%; text-align:left; background:var(--surface-2); border:1.5px solid var(--line); border-radius:9px; padding:10px 12px; cursor:pointer; font-family:inherit; line-height:1.45; transition:border-color .12s, background .12s}
+.opt:hover{border-color:var(--line-strong)}
+.opt:focus-visible{outline:2px solid var(--steel); outline-offset:2px}
+.opt.sel{border-color:var(--steel); background:var(--steel-tint)}
+.opt .let{flex:none; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:12.5px; color:var(--steel); border:1px solid var(--line-strong); background:var(--surface); border-radius:5px; width:23px; height:23px; display:inline-flex; align-items:center; justify-content:center}
+.opt.sel .let{background:var(--steel); color:var(--steel-ink); border-color:var(--steel)}
+.opt .otext{flex:1}
+.opt .badge{flex:none; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; opacity:0}
+.graded .opt{cursor:default}
+.graded .opt.correct{border-color:var(--good-line); background:var(--good-tint)}
+.graded .opt.correct .let{background:var(--good); color:#fff; border-color:var(--good)}
+.graded .opt.correct .badge{opacity:1; color:var(--good)}
+.graded .opt.chosen-wrong{border-color:var(--bad-line); background:var(--bad-tint)}
+.graded .opt.chosen-wrong .let{background:var(--bad); color:#fff; border-color:var(--bad)}
+.graded .opt.chosen-wrong .badge{opacity:1; color:var(--bad)}
+/* teach block (shown under wrong/unanswered questions after grading) */
+.teach{margin:12px 0 0; border-left:3px solid var(--steel); background:var(--steel-tint); border-radius:0 8px 8px 0; padding:9px 13px; font-size:14px; line-height:1.5}
+.teach .why{color:var(--ink)}
+.teach .ref{display:block; margin-top:5px; font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.02em; color:var(--steel)}
+/* item analysis (admin) */
+.ia{margin-top:22px; border-top:1px solid var(--line); padding-top:6px}
+.ia .bd-title{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:10px 0 4px}
+.ia .hint{margin:0 0 8px}
+.ia-row.low .ia-pct{color:var(--bad); font-weight:600}
+.ia-pct{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+
+/* ---- bottom dock ---- */
+.dock{position:fixed; left:0; right:0; bottom:0; z-index:25; background:color-mix(in srgb,var(--ground) 92%, transparent); backdrop-filter:blur(10px); border-top:1px solid var(--line-strong)}
+.dock-inner{max-width:var(--maxw); margin:0 auto; padding:12px 22px; display:flex; align-items:center; gap:14px}
+.dock .progress{flex:1; min-width:0}
+.dock .ptext{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted); margin:0 0 6px}
+.dock .ptext b{color:var(--ink)}
+.dock .pbar{height:7px; border-radius:5px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden}
+.dock .pbar>span{display:block; height:100%; width:0; background:var(--amber); transition:width .2s}
+.dock .saveState{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--good); margin-left:8px; opacity:0; transition:opacity .3s}
+.dock .saveState.on{opacity:1}
+
+/* ---- modal (results / admin) ---- */
+.modal{position:fixed; inset:0; z-index:40; background:rgba(20,18,12,.55); display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto}
+.modal[hidden]{display:none}
+.modal .sheet{background:var(--surface); border:1px solid var(--line-strong); border-radius:14px; box-shadow:var(--shadow); width:100%; max-width:920px; padding:22px}
+.modal h2{font-family:"Barlow Semi Condensed",sans-serif; font-weight:700; font-size:24px; margin:0 0 4px}
+.modal .close{float:right}
+.rtable{width:100%; border-collapse:collapse; font-size:14px; margin-top:14px}
+.rtable th,.rtable td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top}
+.rtable th{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted)}
+.rtable td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
+.rtable tr.detail td{background:var(--surface-2); font-size:13px}
+.rtable .exp{cursor:pointer; color:var(--steel); text-decoration:underline; text-underline-offset:2px}
+.ans-line{padding:3px 0; border-bottom:1px dotted var(--line)}
+.ans-line .ai{font-family:"IBM Plex Mono",monospace; font-weight:600}
+.ok{color:var(--good)} .no{color:var(--bad)}
+
+/* ---- print result area (screen-hidden) ---- */
+#printArea{display:none}
+footer{margin-top:40px; padding-top:20px; border-top:1px solid var(--line); color:var(--faint); font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.03em; line-height:1.7}
+
+@media (max-width:560px){.band{flex-wrap:wrap; gap:6px}.band .b-count{margin-left:0; width:100%}.bar .count{display:none}.dock-inner{flex-wrap:wrap}}
+
+/* ---- print ---- */
+@media print{
+  .bar,.dock,.modal,.result .actions,footer,#start{display:none !important}
+  body{background:#fff}
+  .q,.band,.result{box-shadow:none}
+  .opt{background:#fff}
+  body.print-result #exam, body.print-result .result{display:none !important}
+  body.print-result #printArea{display:block !important}
+  #printArea{color:#000}
+  #printArea h1{font-size:22px; margin:0 0 4px}
+  #printArea .pmeta{font-family:"IBM Plex Mono",monospace; font-size:12px; color:#333; margin:2px 0}
+  #printArea .pscore{font-size:20px; font-weight:700; margin:12px 0 6px}
+  #printArea table{width:100%; border-collapse:collapse; font-size:12px; margin-top:8px}
+  #printArea th,#printArea td{border:1px solid #ccc; padding:4px 6px; text-align:left}
+  #printArea .pq{margin:8px 0; padding:6px 0; border-bottom:1px solid #ddd; break-inside:avoid; font-size:12px}
+  #printArea .pok{color:#1f7a4d; font-weight:700} #printArea .pno{color:#b3341f; font-weight:700}
+  #printArea .sig{margin-top:26px; font-size:12px; color:#333}
+}
+</style>
+<div class="bar"><div class="bar-inner">
+<span class="mark">Unicontrol · Exam</span>
+<span class="spacer"></span>
+<span class="count" id="barCount" hidden><b>0</b> / 10 answered</span>
+<button class="linklike" id="adminLink" type="button">Results (admin)</button>
+<button class="btn primary" id="submitTop" type="button" hidden>Submit exam</button>
+</div></div>
+<section class="start" id="start">
+<p class="eyebrow">Unicontrol UCS · IMU Auto-Sensor Calibration</p>
+<h1>IMU Auto-Sensor Calibration — Exam</h1>
+<div class="warn">&#9888; <b>Before you begin:</b> This test is based on the Unicontrol IMU Auto-Sensor calibration help article and its two calibration videos (step-by-step and real-time). Read the article and watch both videos before you start.</div>
+<div class="card">
+<div class="field"><label for="tkName">Your name</label><input id="tkName" type="text" autocomplete="name" placeholder="e.g. Alex Murphy"></div>
+<div class="field"><label for="tkEmail">Email address</label><input id="tkEmail" type="email" autocomplete="email" placeholder="e.g. alex@company.com"></div>
+<p class="hint">Enter your name or your email (at least one) so your result can be identified.</p>
+<div class="startmeta">
+<span class="tag">Date: <b id="todayTag">—</b></span>
+<span class="tag"><b>10</b> questions</span>
+<span class="tag">Times taken: <b id="timesTag">—</b></span>
+<span class="tag">Pass mark: <b>90%</b></span>
+</div>
+<button class="btn primary lg" id="startBtn" type="button" disabled>Start exam</button>
+<p class="hint" id="resumeHint">You can pause any time and pick up later — sign back in with the same name or email (on this or another device) and you'll be offered to resume where you left off.</p>
+<p class="hint" id="resumeNote" style="color:var(--good)" hidden></p>
+</div>
+</section>
+<div class="wrap" id="exam" hidden>
+<header class="exhdr">
+<p class="eyebrow">Unicontrol UCS · IMU Auto-Sensor Calibration</p>
+<h1>IMU Auto-Sensor Calibration — Exam</h1>
+<div class="warn">&#9888; <b>Image questions:</b> This test is based on the Unicontrol IMU Auto-Sensor calibration help article and its two calibration videos (step-by-step and real-time). Read the article and watch both videos before you start.</div>
+<p class="who" id="examWho"></p>
+</header>
+<section class="result" id="result" hidden aria-live="polite">
+<div class="rrow"><div><p class="score"><span id="scoreNum">0</span><span class="of"> / 10</span></p><p class="pct" id="scorePct">0%</p></div><div class="verdict" id="verdict"></div></div>
+<div class="meter"><span id="meterFill" style="width:0%"></span></div>
+<p class="msg" id="scoreMsg"></p>
+<div class="breakdown" id="breakdown"><p class="bd-title">Score by section</p><p class="review-msg" id="reviewMsg" hidden>&#9998; You could review or revise the <b>highlighted</b> sections to improve your score.</p><div id="bdRows"></div></div>
+<div class="actions">
+<button class="btn primary" id="printShortBtn" type="button">Print short result</button>
+<button class="btn" id="printFullBtn" type="button">Print full result</button>
+<button class="btn" id="dlShortBtn" type="button" hidden>Download short (.txt)</button>
+<button class="btn" id="dlFullBtn" type="button" hidden>Download full (.txt)</button>
+<button class="btn" id="retakeBtn" type="button">Retake</button>
+</div>
+<p class="saved" id="savedMsg"></p>
+</section>
+<section>
+<div class="band"><h2>Sensor drift &amp; firmware</h2><span class="b-count">4 questions</span></div>
+<div class="sub"><p class="sub-lab">Sensor drift &amp; firmware / What causes drift</p><h3>What causes drift <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q1" data-n="1" data-correct="3">
+<div class="q-head"><span class="num">1</span><p class="q-text">According to the article, what causes the IMU sensors to begin drifting?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 1 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Leaving the machine powered on for many hours</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Operating the excavator in very cold weather</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Driving the machine across rough, uneven ground</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Moving the arm rapidly and repeating the same motion</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Sensor drift &amp; firmware / Nature of drift</p><h3>Nature of drift <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q2" data-n="2" data-correct="2">
+<div class="q-head"><span class="num">2</span><p class="q-text">Once a sensor has entered a drifting state, what is true of it?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 2 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">It clears the drift the next time it is powered on</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">It gradually corrects itself once the arm is held still</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">It cannot recover on its own and resets when powered off</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">It stores the drift permanently until it is replaced</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Sensor drift &amp; firmware / First fix</p><h3>First fix <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q3" data-n="3" data-correct="1">
+<div class="q-head"><span class="num">3</span><p class="q-text">What is the first fix recommended for drift, before any calibration?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 3 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Performing a full sensor calibration</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Updating the sensor firmware</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Rebooting the tablet and the router</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Replacing the affected IMU sensor</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Sensor drift &amp; firmware / When to calibrate</p><h3>When to calibrate <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q4" data-n="4" data-correct="3">
+<div class="q-head"><span class="num">4</span><p class="q-text">When is a full sensor calibration actually suggested?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 4 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Every time the machine is powered on at the start of a shift</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Whenever a different operator takes over the machine controls</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">After each firmware update, as part of routine maintenance</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Only if repeated arm movements can easily trigger the drift</span><span class="badge"></span></button></li>
+</ul></article>
+</section>
+<section>
+<div class="band"><h2>Update &amp; calibration steps</h2><span class="b-count">2 questions</span></div>
+<div class="sub"><p class="sub-lab">Update &amp; calibration steps / Minimum versions</p><h3>Minimum versions <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q5" data-n="5" data-correct="0">
+<div class="q-head"><span class="num">5</span><p class="q-text">To what minimum version must the tablet software and VG710(u) firmware be upgraded?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 5 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Version 22</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Version 20</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Version 25</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Version 24</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Update &amp; calibration steps / Correct order</p><h3>Correct order <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q6" data-n="6" data-correct="0">
+<div class="q-head"><span class="num">6</span><p class="q-text">What is the correct order of the update and calibration process?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 6 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Update tablet, router and sensors, then calibrate</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Calibrate first, then update the sensors afterwards</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Calibrate, update everything, then calibrate again</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Update only the sensors, then calibrate straight away</span><span class="badge"></span></button></li>
+</ul></article>
+</section>
+<section>
+<div class="band"><h2>Calibration procedure</h2><span class="b-count">4 questions</span></div>
+<div class="sub"><p class="sub-lab">Calibration procedure / Before you start</p><h3>Before you start <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q7" data-n="7" data-correct="2">
+<div class="q-head"><span class="num">7</span><p class="q-text">In what configuration do the videos say the machine must be calibrated?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 7 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">With the bucket fully loaded</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">With the boom raised fully up</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Without a bucket attached</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">With the tiltrotator removed</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Calibration procedure / Movement rules</p><h3>Movement rules <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q8" data-n="8" data-correct="0">
+<div class="q-head"><span class="num">8</span><p class="q-text">What timing rule do the videos give for tilting and rotating?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 8 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Always finish tilting before the machine rotation ends</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Finish rotating fully before you begin to tilt</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Begin tilting only after the rotation has finished</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Tilt and rotate as two separate, slow movements</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Calibration procedure / Starting a new calibration</p><h3>Starting a new calibration <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q9" data-n="9" data-correct="1">
+<div class="q-head"><span class="num">9</span><p class="q-text">Before starting a new calibration, what must the operator do first?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 9 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Detach and then reconnect each sensor on the machine in turn</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Reset the calibration until the status shows factory calibration</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">Save the existing calibration values to each of the sensors</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Set the machine heading to exactly zero degrees beforehand</span><span class="badge"></span></button></li>
+</ul></article>
+<div class="sub"><p class="sub-lab">Calibration procedure / Finishing the calibration</p><h3>Finishing the calibration <span class="cnt">1 Q</span></h3><div class="sub-rule"></div></div>
+<article class="q" id="q10" data-n="10" data-correct="2">
+<div class="q-head"><span class="num">10</span><p class="q-text">At the end of the routine, when should the operator press Save?</p><span class="q-flag"></span></div>
+<ul class="opts" role="radiogroup" aria-label="Question 10 options">
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="0"><span class="let">A</span><span class="otext">Only when some of the values have failed</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="1"><span class="let">B</span><span class="otext">Continuously throughout each machine rotation</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="2"><span class="let">C</span><span class="otext">After pressing Stop, once all values pass</span><span class="badge"></span></button></li>
+<li><button type="button" class="opt" role="radio" aria-checked="false" data-i="3"><span class="let">D</span><span class="otext">Immediately after the reset, before moving</span><span class="badge"></span></button></li>
+</ul></article>
+</section>
+<footer>Source: Unicontrol UCS — IMU Auto-Sensor Calibration (help article + videos) (unicontrol-io.atlassian.net/helpcenter/UCS/article/1331200028). Compiled for training use — verify against the live manual before relying on any procedure.</footer>
+</div>
+<div class="dock" id="dock" hidden><div class="dock-inner">
+<div class="progress"><p class="ptext"><b id="ansCount">0</b> of 10 answered<span class="saveState" id="saveState"></span></p><div class="pbar"><span id="pbarFill"></span></div></div>
+<button class="btn lg" id="saveExitBtn" type="button">Save &amp; exit</button>
+<button class="btn lg" id="resetBtn" type="button">Reset</button>
+<button class="btn lg primary" id="submitBtn" type="button">Submit exam</button>
+</div></div>
+<div class="modal" id="admin" hidden><div class="sheet">
+<button class="btn close" id="adminClose" type="button">Close</button>
+<h2>Results</h2>
+<div id="adminGate"><p class="hint">Enter the administrator passcode to view all recorded results.</p><div class="field" style="max-width:280px"><label for="pc">Passcode</label><input id="pc" type="password" autocomplete="off"></div><button class="btn primary" id="pcBtn" type="button">View results</button><p class="hint" id="pcMsg"></p></div>
+<div id="adminBody" hidden><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px"><span class="count" id="adminCount"></span><span class="spacer" style="flex:1"></span><button class="btn" id="printResultsBtn" type="button">Print list</button></div><div id="adminList"></div><div class="ia" id="itemAnalysis" hidden><p class="bd-title">Question analysis &mdash; most-missed first</p><p class="hint">Across all recorded attempts. Low percentages point to topics people struggle with (or a question worth rewording).</p><div id="iaRows"></div></div></div>
+</div></div>
+<div id="printArea"></div>
+<script>
+var ANSWERS={"1": 3, "2": 2, "3": 1, "4": 3, "5": 0, "6": 0, "7": 2, "8": 0, "9": 1, "10": 2};
+var SECTIONS=[{"label": "Sensor drift & firmware / What causes drift", "ns": [1]}, {"label": "Sensor drift & firmware / Nature of drift", "ns": [2]}, {"label": "Sensor drift & firmware / First fix", "ns": [3]}, {"label": "Sensor drift & firmware / When to calibrate", "ns": [4]}, {"label": "Update & calibration steps / Minimum versions", "ns": [5]}, {"label": "Update & calibration steps / Correct order", "ns": [6]}, {"label": "Calibration procedure / Before you start", "ns": [7]}, {"label": "Calibration procedure / Movement rules", "ns": [8]}, {"label": "Calibration procedure / Starting a new calibration", "ns": [9]}, {"label": "Calibration procedure / Finishing the calibration", "ns": [10]}];
+var QMETA={"1": {"section": "Sensor drift & firmware / What causes drift", "q": "According to the article, what causes the IMU sensors to begin drifting?", "options": ["Leaving the machine powered on for many hours", "Operating the excavator in very cold weather", "Driving the machine across rough, uneven ground", "Moving the arm rapidly and repeating the same motion"], "expl": "The article says sensors begin to drift when the operator moves the arm rapidly and repeats the same motion."}, "2": {"section": "Sensor drift & firmware / Nature of drift", "q": "Once a sensor has entered a drifting state, what is true of it?", "options": ["It clears the drift the next time it is powered on", "It gradually corrects itself once the arm is held still", "It cannot recover on its own and resets when powered off", "It stores the drift permanently until it is replaced"], "expl": "Sensor drift is a state the sensor cannot recover from on its own, and it resets every time the sensor is powered off."}, "3": {"section": "Sensor drift & firmware / First fix", "q": "What is the first fix recommended for drift, before any calibration?", "options": ["Performing a full sensor calibration", "Updating the sensor firmware", "Rebooting the tablet and the router", "Replacing the affected IMU sensor"], "expl": "Calibration is not mandatory: in most cases updating the sensor firmware (to 2.5n) resolves the drift, and that is the first fix recommended."}, "4": {"section": "Sensor drift & firmware / When to calibrate", "q": "When is a full sensor calibration actually suggested?", "options": ["Every time the machine is powered on at the start of a shift", "Whenever a different operator takes over the machine controls", "After each firmware update, as part of routine maintenance", "Only if repeated arm movements can easily trigger the drift"], "expl": "A full sensor calibration is only suggested if the operator can easily trigger drift through repeated arm movements."}, "5": {"section": "Update & calibration steps / Minimum versions", "q": "To what minimum version must the tablet software and VG710(u) firmware be upgraded?", "options": ["Version 22", "Version 20", "Version 25", "Version 24"], "expl": "The update steps require the tablet software and the VG710(u) firmware to be upgraded to a minimum of version 22."}, "6": {"section": "Update & calibration steps / Correct order", "q": "What is the correct order of the update and calibration process?", "options": ["Update tablet, router and sensors, then calibrate", "Calibrate first, then update the sensors afterwards", "Calibrate, update everything, then calibrate again", "Update only the sensors, then calibrate straight away"], "expl": "The correct sequence is: update the tablet, the VG710(u) router and all IMU sensors, and only then perform the calibration."}, "7": {"section": "Calibration procedure / Before you start", "q": "In what configuration do the videos say the machine must be calibrated?", "options": ["With the bucket fully loaded", "With the boom raised fully up", "Without a bucket attached", "With the tiltrotator removed"], "expl": "The videos state the machine must be calibrated without a bucket attached."}, "8": {"section": "Calibration procedure / Movement rules", "q": "What timing rule do the videos give for tilting and rotating?", "options": ["Always finish tilting before the machine rotation ends", "Finish rotating fully before you begin to tilt", "Begin tilting only after the rotation has finished", "Tilt and rotate as two separate, slow movements"], "expl": "A key movement rule in the videos is to always finish tilting before the machine rotation ends."}, "9": {"section": "Calibration procedure / Starting a new calibration", "q": "Before starting a new calibration, what must the operator do first?", "options": ["Detach and then reconnect each sensor on the machine in turn", "Reset the calibration until the status shows factory calibration", "Save the existing calibration values to each of the sensors", "Set the machine heading to exactly zero degrees beforehand"], "expl": "The procedure begins by resetting the current calibration and confirming each sensor's status has changed to 'Factory calibration' before starting a new one."}, "10": {"section": "Calibration procedure / Finishing the calibration", "q": "At the end of the routine, when should the operator press Save?", "options": ["Only when some of the values have failed", "Continuously throughout each machine rotation", "After pressing Stop, once all values pass", "Immediately after the reset, before moving"], "expl": "At the end you press Stop in the calibration menu, and only once all values pass do you press Save."}};
+var TOTAL=10;
+var POOL=10;
+var DRAW=10;
+var BANDS={excellent:97,pass:90,review:50};
+var PASSCODE="unicontrol-imu-admin";
+var SIGNIN=true;
+var EXAM_TITLE="IMU Auto-Sensor Calibration \u2014 Exam";
+var STORE_KEY="ucs_times_"+"Unicontrol_IMU_Calibration_Quiz";
+var PROG_KEY="ucs_prog_"+"Unicontrol_IMU_Calibration_Quiz"+"_";
+
+(function(){
+  var chosen={}, graded=false, taker={name:"",email:""}, dateStr="", result=null;
+  var db=null, downloads=null, haveDb=false, timesTaken=null;
+  var qEls=[].slice.call(document.querySelectorAll('.q'));
+  function $(id){return document.getElementById(id);}
+
+  // ---- per-sitting random subset (draw DRAW of POOL) ----
+  var allN=qEls.map(function(q){return +q.dataset.n;});
+  var allNset={}; allN.forEach(function(n){allNset[n]=1;});
+  var selected=allN.slice(), selSet={}, dispOf={};
+  allN.forEach(function(n){selSet[n]=1; dispOf[n]=n;});
+  function activeQEls(){ return qEls.filter(function(q){return selSet[+q.dataset.n];}); }
+  function pickSelection(){
+    if(DRAW>=POOL) return allN.slice();
+    var pool=allN.slice(), keep={};
+    for(var i=0;i<DRAW && i<pool.length;i++){
+      var j=i+Math.floor(Math.random()*(pool.length-i));
+      var t=pool[i]; pool[i]=pool[j]; pool[j]=t; keep[pool[i]]=1;
+    }
+    return allN.filter(function(n){return keep[n];});  // DOM order
+  }
+  function applyDraw(list){
+    selected=(list&&list.length)?list.slice():allN.slice();
+    selSet={}; selected.forEach(function(n){selSet[n]=1;});
+    dispOf={}; var d=0;
+    qEls.forEach(function(q){
+      var n=+q.dataset.n, on=!!selSet[n];
+      q.hidden=!on;
+      if(on){ d++; dispOf[n]=d; var nb=q.querySelector('.num'); if(nb) nb.textContent=d; }
+    });
+    TOTAL=selected.length;
+    hideEmptyGroups();
+    updateProgress();
+  }
+  function visCountAfter(sub){
+    var c=0, el=sub.nextElementSibling;
+    while(el && el.tagName!=='SECTION' && !(el.classList&&el.classList.contains('sub'))){
+      if(el.classList && el.classList.contains('q') && !el.hidden) c++;
+      el=el.nextElementSibling;
+    }
+    return c;
+  }
+  function hideEmptyGroups(){
+    document.querySelectorAll('#exam .sub').forEach(function(sub){
+      var c=visCountAfter(sub); sub.hidden=(c===0);
+      var cnt=sub.querySelector('.cnt'); if(cnt && c>0) cnt.textContent=c+' Q';
+    });
+    document.querySelectorAll('#exam > section:not(.result)').forEach(function(sec){
+      var vis=sec.querySelectorAll('.q:not([hidden])').length;
+      sec.hidden=(vis===0);
+      var bc=sec.querySelector('.b-count'); if(bc && vis>0) bc.textContent=vis+(vis===1?' question':' questions');
+    });
+  }
+  function esc(s){var d=document.createElement('div'); d.textContent=(s==null?'':s); return d.innerHTML;}
+  function fmtDate(d){try{return d.toLocaleDateString(undefined,{day:'2-digit',month:'long',year:'numeric'});}catch(e){return d.toISOString().slice(0,10);}}
+  function subLabel(sec){ var p=(sec||'').split(' / '); return p.length>1?p.slice(1).join(' / '):(p[0]||''); }
+
+  // ---- capabilities (published artifact only) ----
+  var slug="anon", saveTimer=null;
+  var dbReadyP=new Promise(function(res){
+    if(window.claude && claude.use){
+      claude.use('db').then(function(x){ if(x){ db=x; haveDb=true; subscribeCount(); } res(); }, function(){ res(); });
+    } else { res(); }
+  });
+  if(window.claude && claude.use){
+    claude.use('downloads').then(function(x){ if(x){ downloads=x; showDl(); } });
+  }
+  function showDl(){ ['dlShortBtn','dlFullBtn'].forEach(function(id){ if($(id)) $(id).hidden=false; }); }
+
+  // ---- times taken ----
+  function localTimes(){ try{return parseInt(localStorage.getItem(STORE_KEY)||'0',10)||0;}catch(e){return 0;} }
+  function renderTimes(){
+    var v = (timesTaken==null? localTimes() : timesTaken);
+    if($('timesTag')) $('timesTag').textContent = v;
+  }
+  function subscribeCount(){
+    try{
+      db.collection('results').onSnapshot(function(snap){ timesTaken=snap.size; renderTimes(); },
+        function(e){ /* fall back silently */ });
+    }catch(e){}
+  }
+
+  // ---- start / sign-in ----
+  var today=new Date(); dateStr=fmtDate(today);
+  if($('todayTag')) $('todayTag').textContent=dateStr;
+  renderTimes();
+  function checkStart(){ if($('startBtn')) $('startBtn').disabled = !( ($('tkName').value.trim()) || ($('tkEmail').value.trim()) ); }
+  if($('tkName')){ $('tkName').addEventListener('input',checkStart); $('tkEmail').addEventListener('input',checkStart); }
+
+  // ---- save / resume progress ----
+  function makeSlug(){
+    var base=(taker.email||taker.name||'anon').toLowerCase();
+    var s=base.replace(/[^a-z0-9_.~:@+-]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
+    return s||'anon';
+  }
+  function progLocalKey(sl){ return PROG_KEY+sl; }
+  function localProg(sl){ try{ var r=localStorage.getItem(progLocalKey(sl)); return r?JSON.parse(r):null; }catch(e){ return null; } }
+  function markSaved(txt){
+    var el=$('saveState'); if(!el) return;
+    if(!txt){ var t=new Date(), hh=('0'+t.getHours()).slice(-2), mm=('0'+t.getMinutes()).slice(-2); txt='Saved '+hh+':'+mm; }
+    el.textContent=txt; el.classList.add('on');
+  }
+  function saveProgress(){
+    if(graded || !SIGNIN) return;
+    var payload={name:taker.name, email:taker.email, chosen:chosen, selected:selected,
+      answered:Object.keys(chosen).length, total:TOTAL, dateStr:dateStr, ts:Date.now()};
+    try{ localStorage.setItem(progLocalKey(slug), JSON.stringify(payload)); }catch(e){}
+    if(haveDb && db){ try{ db.doc('inprogress/'+slug).set(payload).then(function(){markSaved();},function(){}); }catch(e){} }
+    markSaved();
+  }
+  function scheduleSave(){ if(!SIGNIN) return; if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(saveProgress,700); }
+  function loadProgress(sl){
+    return dbReadyP.then(function(){
+      if(haveDb && db){
+        return db.doc('inprogress/'+sl).get().then(function(doc){
+          var d=doc && doc.data && doc.data();
+          if(d && d.chosen && Object.keys(d.chosen).length) return d;
+          return localProg(sl);
+        }, function(){ return localProg(sl); });
+      }
+      return localProg(sl);
+    });
+  }
+  function clearProgress(sl){
+    try{ localStorage.removeItem(progLocalKey(sl)); }catch(e){}
+    if(haveDb && db){ try{ db.doc('inprogress/'+sl).set({done:true, chosen:{}, ts:Date.now()}); }catch(e){} }
+  }
+  function applySelections(){
+    qEls.forEach(function(q){
+      var n=+q.dataset.n;
+      q.querySelectorAll('.opt').forEach(function(b){
+        var on=(chosen[n]!==undefined && +b.dataset.i===chosen[n]);
+        b.classList.toggle('sel',on); b.setAttribute('aria-checked',on?'true':'false');
+      });
+    });
+    updateProgress();
+  }
+  function restoreProgress(saved){
+    chosen={};
+    Object.keys(saved.chosen||{}).forEach(function(k){
+      var n=+k, i=saved.chosen[k];
+      if(!isNaN(n) && i!=null && i!=='') chosen[n]=+i;
+    });
+    applySelections();
+  }
+
+  function startExam(){
+    taker.name=($('tkName')?$('tkName').value.trim():"");
+    taker.email=($('tkEmail')?$('tkEmail').value.trim():"");
+    slug=makeSlug();
+    applyDraw(pickSelection());   // fresh random draw shown immediately
+    if($('start')) $('start').style.display='none';
+    if($('resumeNote')) $('resumeNote').hidden=true;
+    $('exam').hidden=false; $('dock').hidden=false;
+    $('barCount').hidden=false; $('submitTop').hidden=false;
+    var who=[]; if(taker.name) who.push('<b>'+esc(taker.name)+'</b>'); if(taker.email) who.push(esc(taker.email));
+    $('examWho').innerHTML='Test taker: '+(who.join(' · ')||'—')+' &nbsp;·&nbsp; Date: <b>'+esc(dateStr)+'</b>';
+    window.scrollTo({top:0});
+    loadProgress(slug).then(function(saved){
+      if(graded) return;
+      if(saved && saved.chosen && Object.keys(saved.chosen).length){
+        var n=Object.keys(saved.chosen).length;
+        var when=saved.dateStr?(' from '+saved.dateStr):'';
+        if(window.confirm('Welcome back. You have a saved attempt'+when+' with '+n+' of '+TOTAL+' question'+(n===1?'':'s')+' answered.\n\nClick OK to resume the same questions where you left off, or Cancel to start a fresh attempt.')){
+          if(saved.selected && saved.selected.length){
+            var valid=saved.selected.filter(function(x){return allNset[x];});
+            if(valid.length) applyDraw(valid);   // restore the exact same questions
+          }
+          restoreProgress(saved); markSaved('Resumed');
+        } else {
+          clearProgress(slug);   // keep the fresh draw already shown
+        }
+      }
+    });
+  }
+  if($('startBtn')) $('startBtn').addEventListener('click',startExam);
+  if(!SIGNIN){ // no gate: reveal immediately (draw a random subset if the pool is larger)
+    applyDraw(pickSelection());
+    $('exam').hidden=false; $('dock').hidden=false; $('barCount').hidden=false; $('submitTop').hidden=false;
+  }
+
+  // ---- answer selection ----
+  function updateProgress(){
+    var n=Object.keys(chosen).length;
+    if($('ansCount')) $('ansCount').textContent=n;
+    if($('barCount')) $('barCount').innerHTML='<b>'+n+'</b> / '+TOTAL+' answered';
+    if($('pbarFill')) $('pbarFill').style.width=(n/TOTAL*100)+'%';
+  }
+  qEls.forEach(function(q){
+    var n=+q.dataset.n;
+    q.querySelectorAll('.opt').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        if(graded) return;
+        q.querySelectorAll('.opt').forEach(function(b){b.classList.remove('sel'); b.setAttribute('aria-checked','false');});
+        btn.classList.add('sel'); btn.setAttribute('aria-checked','true');
+        chosen[n]=+btn.dataset.i; updateProgress(); scheduleSave();
+      });
+    });
+  });
+
+  // ---- grade ----
+  function grade(){
+    var correct=0;
+    activeQEls().forEach(function(q){
+      var n=+q.dataset.n, right=+q.dataset.correct, pick=chosen[n];
+      q.classList.add('graded');
+      q.querySelectorAll('.opt').forEach(function(b){
+        var i=+b.dataset.i;
+        if(i===right){b.classList.add('correct'); b.querySelector('.badge').textContent='Correct';}
+        if(pick!==undefined && i===pick && pick!==right){b.classList.add('chosen-wrong'); b.querySelector('.badge').textContent='Your answer';}
+      });
+      var flag=q.querySelector('.q-flag');
+      if(pick===right){correct++; q.classList.add('q-right'); flag.textContent='Correct';}
+      else{q.classList.add('q-wrong'); flag.textContent=(pick===undefined?'Not answered':'Incorrect');}
+      var oldt=q.querySelector('.teach'); if(oldt) oldt.remove();
+      if(pick!==right){   // teach: show the manual fact + where to review
+        var m=QMETA[n]||{}, t=document.createElement('div'); t.className='teach';
+        var th=''; if(m.expl) th+='<span class="why">'+esc(m.expl)+'</span>';
+        th+='<span class="ref">&#128214; Review: '+esc(subLabel(m.section))+'</span>';
+        t.innerHTML=th; q.appendChild(t);
+      }
+    });
+    graded=true;
+    var pct=Math.round(correct/TOTAL*100), res=$('result');
+    $('scoreNum').textContent=correct; $('scorePct').textContent=pct+'% correct';
+    $('meterFill').style.width=pct+'%';
+    var v=$('verdict'), msg=$('scoreMsg'), band, txt, col, bg;
+    if(pct>=BANDS.excellent){band='Excellent';txt='Outstanding — you know this manual thoroughly.';}
+    else if(pct>=BANDS.pass){band='Pass';txt='Solid result. Review the questions marked incorrect below.';}
+    else if(pct>=BANDS.review){band='Review needed';txt='A fair start — revisit the sections you missed and retake.';}
+    else{band='More study needed';txt='Work through the manual sections again, then retake.';}
+    v.textContent=band;
+    if(pct>=BANDS.pass){col='var(--good)';bg='var(--good-tint)';}
+    else if(pct>=BANDS.review){col='var(--amber-ink)';bg='var(--amber)';}
+    else{col='var(--bad)';bg='var(--bad-tint)';}
+    v.style.color=col; v.style.background=bg;
+    $('meterFill').style.background=pct>=BANDS.pass?'var(--good)':(pct>=BANDS.review?'var(--amber)':'var(--bad)');
+    var unans=TOTAL-Object.keys(chosen).length;
+    msg.textContent=txt+(unans?(' ('+unans+' left unanswered.)'):'');
+    // per-section breakdown
+    var rows=$('bdRows'); rows.innerHTML='';
+    var secOut=[]; var reviewCount=0;
+    SECTIONS.forEach(function(s){
+      var ns=s.ns.filter(function(n){return selSet[n];});   // only questions in this attempt
+      if(!ns.length) return;                                 // section not drawn this time
+      var c=0; ns.forEach(function(n){ if(chosen[n]===ANSWERS[n]) c++; });
+      var review=(c/ns.length*100) < BANDS.pass;             // below the pass mark = worth revising
+      secOut.push({label:s.label, correct:c, total:ns.length, review:review});
+      if(review) reviewCount++;
+      var cls=c===ns.length?'full':(c/ns.length>=0.5?'':'low');
+      var row=document.createElement('div'); row.className='bd-row'+(review?' review':'');
+      row.innerHTML='<span class="bd-name">'+esc(s.label)+'</span><span class="bd-score '+cls+'">'+c+' / '+ns.length+'</span>';
+      rows.appendChild(row);
+    });
+    if($('reviewMsg')) $('reviewMsg').hidden = (reviewCount===0);
+    // build result object (long) — only the questions this taker was given, in shown order
+    var ans=[];
+    selected.forEach(function(n){
+      var m=QMETA[n], pick=chosen[n], right=ANSWERS[n];
+      ans.push({n:(dispOf[n]||n), poolN:n, section:m.section, q:m.q, expl:m.expl,
+        chosen:(pick===undefined?null:m.options[pick]),
+        correct:m.options[right], ok:(pick===right)});
+    });
+    result={name:taker.name, email:taker.email, dateStr:dateStr, dateISO:today.toISOString(),
+      score:correct, total:TOTAL, pct:pct, verdict:band, sections:secOut, answers:ans, ts:Date.now()};
+    res.hidden=false;
+    ['submitBtn','submitTop'].forEach(function(id){var b=$(id); if(b){b.textContent='Submitted'; b.disabled=true;}});
+    saveResult();
+    clearProgress(slug);
+    res.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  // ---- save result (central log or local counter) ----
+  function saveResult(){
+    if(haveDb && db){
+      var id=String(result.ts)+'-'+Math.random().toString(36).slice(2,8);
+      db.doc('results/'+id).set(result).then(function(){
+        $('savedMsg').textContent='Result recorded. It will appear in the administrator Results view.';
+      }).catch(function(e){
+        $('savedMsg').textContent='Could not record the result centrally — please print or download it to hand in.';
+      });
+    } else {
+      try{ localStorage.setItem(STORE_KEY, String(localTimes()+1)); }catch(e){}
+      timesTaken=null; renderTimes();
+      $('savedMsg').textContent='This result is not stored online here — please print or download it to hand in.';
+    }
+  }
+
+  // ---- printing ----
+  function printResult(mode){
+    var pa=$('printArea'); pa.innerHTML=buildPrintHTML(mode);
+    document.body.classList.add('print-result');
+    var done=function(){ document.body.classList.remove('print-result'); window.removeEventListener('afterprint',done); };
+    window.addEventListener('afterprint',done);
+    window.print(); setTimeout(done,1500);
+  }
+  function buildPrintHTML(mode){
+    var r=result; if(!r) return '';
+    var h='<h1>'+esc(EXAM_TITLE)+'</h1>';
+    h+='<div class="pmeta">Test taker: <b>'+esc(r.name||'—')+'</b>'+(r.email?(' &lt;'+esc(r.email)+'&gt;'):'')+'</div>';
+    h+='<div class="pmeta">Date: '+esc(r.dateStr)+'</div>';
+    h+='<div class="pscore">Score: '+r.score+' / '+r.total+' ('+r.pct+'%) — '+esc(r.verdict)+'</div>';
+    if(r.sections.some(function(s){return s.review;})) h+='<div class="pmeta">Review or revise the sections marked “review” to improve your score.</div>';
+    h+='<table><thead><tr><th>Section</th><th>Score</th></tr></thead><tbody>';
+    r.sections.forEach(function(s){ h+='<tr><td>'+esc(s.label)+(s.review?' — <b>review</b>':'')+'</td><td>'+s.correct+' / '+s.total+'</td></tr>'; });
+    h+='</tbody></table>';
+    if(mode==='full'){
+      h+='<h1 style="font-size:16px;margin-top:16px">All answers</h1>';
+      r.answers.forEach(function(a){
+        h+='<div class="pq"><div><b>'+a.n+'.</b> '+esc(a.q)+'</div>';
+        h+='<div>Your answer: <span class="'+(a.ok?'pok':'pno')+'">'+esc(a.chosen==null?'(not answered)':a.chosen)+(a.ok?' ✓':' ✗')+'</span></div>';
+        if(!a.ok) h+='<div>Correct answer: <span class="pok">'+esc(a.correct)+'</span></div>';
+        if(!a.ok && a.expl) h+='<div style="color:#333">Why: '+esc(a.expl)+'</div>';
+        h+='</div>';
+      });
+    }
+    h+='<div class="sig">Signed (test taker): __________________________&nbsp;&nbsp;&nbsp;Date: ____________</div>';
+    return h;
+  }
+  if($('printShortBtn')) $('printShortBtn').addEventListener('click',function(){printResult('short');});
+  if($('printFullBtn')) $('printFullBtn').addEventListener('click',function(){printResult('full');});
+
+  // ---- download ----
+  function resultText(mode){
+    var r=result, L=[];
+    L.push(EXAM_TITLE);
+    L.push('Test taker: '+(r.name||'-')+(r.email?(' <'+r.email+'>'):''));
+    L.push('Date: '+r.dateStr);
+    L.push('Score: '+r.score+' / '+r.total+' ('+r.pct+'%) - '+r.verdict);
+    L.push(''); L.push('Score by section:');
+    r.sections.forEach(function(s){ L.push('  '+s.label+': '+s.correct+' / '+s.total+(s.review?'   [review]':'')); });
+    if(r.sections.some(function(s){return s.review;})) { L.push(''); L.push('Review or revise the sections marked [review] to improve your score.'); }
+    if(mode==='full'){
+      L.push(''); L.push('All answers:');
+      r.answers.forEach(function(a){
+        L.push(a.n+'. '+a.q);
+        L.push('   Your answer: '+(a.chosen==null?'(not answered)':a.chosen)+(a.ok?'  [CORRECT]':'  [WRONG]'));
+        if(!a.ok) L.push('   Correct answer: '+a.correct);
+        if(!a.ok && a.expl) L.push('   Why: '+a.expl);
+      });
+    }
+    return L.join('\n');
+  }
+  function download(mode){
+    if(!downloads||!result) return;
+    var who=(result.name||result.email||'result').replace(/[^A-Za-z0-9_-]+/g,'_').slice(0,40);
+    var fn=who+'_'+(mode==='full'?'full':'short')+'_result.txt';
+    downloads.save({filename:fn, data:resultText(mode)}).catch(function(e){});
+  }
+  if($('dlShortBtn')) $('dlShortBtn').addEventListener('click',function(){download('short');});
+  if($('dlFullBtn')) $('dlFullBtn').addEventListener('click',function(){download('full');});
+
+  // ---- submit / reset ----
+  function confirmSubmit(){
+    if(graded) return;
+    var unans=TOTAL-Object.keys(chosen).length;
+    if(unans>0 && !window.confirm(unans+' question'+(unans===1?' is':'s are')+' still unanswered. Submit anyway?')) return;
+    grade();
+  }
+  function reset(reroll){
+    chosen={}; graded=false; result=null;
+    qEls.forEach(function(q){
+      q.classList.remove('graded','q-right','q-wrong');
+      q.querySelectorAll('.opt').forEach(function(b){b.classList.remove('sel','correct','chosen-wrong'); b.setAttribute('aria-checked','false'); b.querySelector('.badge').textContent='';});
+      q.querySelector('.q-flag').textContent='';
+      var t=q.querySelector('.teach'); if(t) t.remove();
+    });
+    $('result').hidden=true; $('savedMsg').textContent='';
+    if($('saveState')){ $('saveState').textContent=''; $('saveState').classList.remove('on'); }
+    ['submitBtn','submitTop'].forEach(function(id){var b=$(id); if(b){b.disabled=false; b.textContent='Submit exam';}});
+    if(reroll && DRAW<POOL) applyDraw(pickSelection());   // Retake = a new random draw
+    updateProgress(); window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if($('submitBtn')) $('submitBtn').addEventListener('click',confirmSubmit);
+  if($('submitTop')) $('submitTop').addEventListener('click',confirmSubmit);
+  if($('retakeBtn')) $('retakeBtn').addEventListener('click',function(){reset(true);});
+  if($('resetBtn')) $('resetBtn').addEventListener('click',function(){reset(false);});
+
+  // ---- save & exit (pause) ----
+  function saveAndExit(){
+    if(saveTimer){ clearTimeout(saveTimer); saveTimer=null; }
+    saveProgress();
+    $('exam').hidden=true; $('dock').hidden=true; $('barCount').hidden=true; $('submitTop').hidden=true;
+    if($('start')) $('start').style.display='block';
+    if($('resumeNote')){
+      $('resumeNote').hidden=false;
+      $('resumeNote').innerHTML='&#10003; Progress saved — <b>'+Object.keys(chosen).length+' of '+TOTAL+'</b> answered. '
+        +'You can close this page now. To continue, sign in with the same '
+        +(taker.email?('email ('+esc(taker.email)+')'):'name')+' and choose Resume.';
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if($('saveExitBtn')) $('saveExitBtn').addEventListener('click',saveAndExit);
+
+  // ---- admin / results view ----
+  function openAdmin(){ $('admin').hidden=false; }
+  function closeAdmin(){ $('admin').hidden=true; }
+  if($('adminLink')) $('adminLink').addEventListener('click',openAdmin);
+  if($('adminClose')) $('adminClose').addEventListener('click',closeAdmin);
+  if($('pcBtn')) $('pcBtn').addEventListener('click',function(){
+    if($('pc').value===PASSCODE){ $('adminGate').hidden=true; $('adminBody').hidden=false; loadResults(); }
+    else { $('pcMsg').textContent='Incorrect passcode.'; }
+  });
+  function loadResults(){
+    var list=$('adminList');
+    if(!(haveDb&&db)){ list.innerHTML='<p class="hint">Recorded results are only available on the published online exam. Open the shared link (not a downloaded copy) to view them.</p>'; return; }
+    list.innerHTML='<p class="hint">Loading…</p>';
+    db.collection('results').get().then(function(snap){
+      var rows=snap.docs.map(function(d){return d.data();}).filter(Boolean);
+      rows.sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+      $('adminCount').innerHTML='<b>'+rows.length+'</b> result'+(rows.length===1?'':'s')+' recorded';
+      if(!rows.length){ list.innerHTML='<p class="hint">No results recorded yet.</p>'; return; }
+      var h='<table class="rtable"><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Score</th><th>%</th><th></th></tr></thead><tbody>';
+      rows.forEach(function(r,i){
+        h+='<tr><td class="num">'+esc(r.dateStr||'')+'</td><td>'+esc(r.name||'—')+'</td><td>'+esc(r.email||'—')+'</td>'
+          +'<td class="num">'+r.score+' / '+r.total+'</td><td class="num">'+r.pct+'%</td>'
+          +'<td><span class="exp" data-i="'+i+'">details</span></td></tr>';
+        h+='<tr class="detail" id="det'+i+'" hidden><td colspan="6"></td></tr>';
+      });
+      h+='</tbody></table>';
+      list.innerHTML=h;
+      window.__rows=rows;
+      renderItemAnalysis(rows);
+      list.querySelectorAll('.exp').forEach(function(sp){
+        sp.addEventListener('click',function(){
+          var i=+sp.dataset.i, tr=$('det'+i);
+          if(tr.hidden){ tr.hidden=false; tr.firstChild.innerHTML=detailHTML(rows[i]); sp.textContent='hide'; }
+          else { tr.hidden=true; sp.textContent='details'; }
+        });
+      });
+    }).catch(function(e){ list.innerHTML='<p class="hint">Could not load results ('+esc(e&&e.code||'error')+').</p>'; });
+  }
+  function detailHTML(r){
+    var h='<div style="margin-bottom:6px"><b>Score by section:</b></div>';
+    (r.sections||[]).forEach(function(s){ h+='<div class="ans-line">'+esc(s.label)+': <span class="ai">'+s.correct+' / '+s.total+'</span></div>'; });
+    h+='<div style="margin:8px 0 6px"><b>Answers:</b></div>';
+    (r.answers||[]).forEach(function(a){
+      h+='<div class="ans-line">'+a.n+'. '+esc(a.q)+'<br>'
+        +'<span class="'+(a.ok?'ok':'no')+'">'+esc(a.chosen==null?'(not answered)':a.chosen)+(a.ok?' ✓':' ✗')+'</span>'
+        +(a.ok?'':' — correct: <span class="ok">'+esc(a.correct)+'</span>')
+        +((!a.ok&&a.expl)?'<br><span style="color:var(--muted)">Why: '+esc(a.expl)+'</span>':'')+'</div>';
+    });
+    return h;
+  }
+  function renderItemAnalysis(rows){
+    var box=$('itemAnalysis'), out=$('iaRows'); if(!box||!out) return;
+    var stat={};
+    rows.forEach(function(r){ (r.answers||[]).forEach(function(a){
+      var k=a.q; if(!k) return;
+      if(!stat[k]) stat[k]={q:a.q, section:a.section||'', shown:0, correct:0};
+      stat[k].shown++; if(a.ok) stat[k].correct++;
+    });});
+    var items=Object.keys(stat).map(function(k){return stat[k];});
+    if(!items.length){ box.hidden=true; return; }
+    items.forEach(function(s){ s.pct=Math.round(s.correct/s.shown*100); });
+    items.sort(function(a,b){ return a.pct-b.pct || b.shown-a.shown; });
+    var h='<table class="rtable"><thead><tr><th>%</th><th>Correct</th><th>Question</th><th>Section</th></tr></thead><tbody>';
+    items.forEach(function(s){
+      var low=s.pct<BANDS.pass;
+      h+='<tr class="ia-row'+(low?' low':'')+'"><td class="ia-pct">'+s.pct+'%</td>'
+        +'<td class="num">'+s.correct+' / '+s.shown+'</td><td>'+esc(s.q)+'</td>'
+        +'<td>'+esc(subLabel(s.section))+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    out.innerHTML=h; box.hidden=false;
+  }
+  if($('printResultsBtn')) $('printResultsBtn').addEventListener('click',function(){ window.print(); });
+
+  updateProgress();
+})();
+
+</script>
+</body></html>
